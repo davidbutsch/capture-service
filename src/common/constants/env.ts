@@ -5,7 +5,6 @@ dotenv.config();
 
 export class ENV {
   public NODE_ENV: string | undefined;
-  public SERVICE_TAG: string | undefined;
   public LOG_PATH: string | undefined;
   public PORT: string | undefined;
   public CORS_WHITELIST: string | undefined;
@@ -13,13 +12,7 @@ export class ENV {
   private readonly keys: (keyof ENV)[];
 
   constructor() {
-    this.keys = [
-      "NODE_ENV",
-      "SERVICE_TAG",
-      "LOG_PATH",
-      "PORT",
-      "CORS_WHITELIST",
-    ];
+    this.keys = ["NODE_ENV", "LOG_PATH", "PORT", "CORS_WHITELIST"];
 
     this.loadENV();
   }
