@@ -1,0 +1,10 @@
+services:
+  microservice:
+    build:
+      context: ..
+      dockerfile: ./node-service-template/Dockerfile
+    ports:
+      - "80:80"
+    restart: always
+    env_file:
+      - .env
