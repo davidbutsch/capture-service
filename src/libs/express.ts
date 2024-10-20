@@ -16,6 +16,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import { useExpressServer } from "routing-controllers";
+import { VideoController } from "@/modules/video";
 
 const securityMiddleware = (app: Express) => {
   app.enable("trust proxy");
@@ -48,7 +49,7 @@ securityMiddleware(app);
 standardMiddleware(app);
 
 useExpressServer(app, {
-  controllers: [],
+  controllers: [VideoController],
   routePrefix: BASE_PATH,
   defaultErrorHandler: false,
   validation: defaultValidationConfig,

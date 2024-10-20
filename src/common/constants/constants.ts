@@ -1,1 +1,1 @@
-export const BASE_PATH = "/v1";
+export const BASE_PATH = "/capture/api/v1";
