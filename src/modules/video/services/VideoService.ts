@@ -1,12 +1,46 @@
 import { AppError } from "@/errors";
-import { ffmpeg } from "@/libs";
+import { ffmpeg, s3Client } from "@/libs";
 import { IS3Repository } from "@/modules/S3";
 import { IVideoService } from "@/modules/video";
 import { StatusCodes } from "http-status-codes";
 import { inject, injectable } from "tsyringe";
 
+import { config } from "@/common";
 import { IMusiqRepository } from "@/modules/musiq";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { PassThrough } from "stream";
+
+function getRandomIndexes(arr: any[], count: number): number[] {
+  const randomIndexes = new Set<number>();
+
+  while (randomIndexes.size < count) {
+    const randomIndex = Math.floor(Math.random() * arr.length);
+    randomIndexes.add(randomIndex);
+  }
+
+  return Array.from(randomIndexes);
+}
+
+async function getSignedUrlForS3Object(
+  bucketName: string,
+  objectKey: string
+): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: bucketName,
+    Key: objectKey,
+  });
+
+  // Generate a signed URL valid for 60 minutes
+  const signedUrl = await getSignedUrl(
+    s3Client as unknown as any,
+    command as unknown as any,
+    {
+      expiresIn: 3600,
+    }
+  );
+  return signedUrl;
+}
 
 @injectable()
 export class VideoService implements IVideoService {
@@ -19,16 +53,15 @@ export class VideoService implements IVideoService {
     const videoBuffer = await this.s3Repository.getBuffer(key);
     const buffers = await this.toImageSequence(videoBuffer);
 
-    const myarray: string[] = [];
-
-    buffers.forEach(async (buffer) => {
-      const prediction = await this.musiqRepository.predict(buffer);
-      myarray.push(prediction.toString());
+    const promises = getRandomIndexes(buffers, 8).map(async (i) => {
+      const key = await this.s3Repository.uploadBuffer(buffers[i], "image/png");
+      const url = getSignedUrlForS3Object(config.aws.s3.bucket, key);
+      return url;
     });
 
-    console.log(myarray);
+    const urls = await Promise.all(promises);
 
-    return myarray;
+    return urls;
   }
 
   async uploadVideo(file?: Express.Multer.File): Promise<string> {
